@@ -1,0 +1,4 @@
+# require c++11
+## PKG_CXXFLAGS= -pthread -std=c++11
+## PKG_CXXFLAGS= -g -O3 -Wall -pipe -Wno-unused -pedantic -pthread -std=c++11
+CXX_STD = CXX11

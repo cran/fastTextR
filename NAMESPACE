@@ -1,0 +1,25 @@
+useDynLib(fastTextR, .registration = TRUE)
+
+
+import(Rcpp)
+importFrom(stats, predict)
+importFrom(graphics, plot.new, plot.window, symbols, strwidth, text)
+
+
+export(ft.control)
+
+export(normalize)
+export(fasttext)
+export(predict.supervised_model)
+export(get_words)
+export(get_word_vectors)
+
+export(save.fasttext)
+export(read.fasttext)
+
+
+S3method(predict, supervised_model)
+S3method(print, cbow_model)
+S3method(print, skipgram_model)
+S3method(print, supervised_model)
+
