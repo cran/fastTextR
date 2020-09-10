@@ -10,6 +10,4 @@
 using namespace Rcpp;
 using namespace fasttext;
 
-double cosine_similarity(std::vector<double> a, std::vector<double> b);
-
 #endif

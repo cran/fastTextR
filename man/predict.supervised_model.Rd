@@ -2,23 +2,38 @@
 % Please edit documentation in R/fasttext.R
 \name{predict.supervised_model}
 \alias{predict.supervised_model}
+\alias{ft_predict}
 \title{Predict using a Previously Trained Model}
 \usage{
-\method{predict}{supervised_model}(object, newdata = character(),
-  newdata_file = "", result_file = "", k = 1L, prob = FALSE, ...)
+ft_predict(
+  model,
+  newdata,
+  k = 1L,
+  threshold = 0,
+  rval = c("sparse", "dense", "slam"),
+  ...
+)
 }
 \arguments{
-\item{object}{an object inheriting from \code{'fasttext'}.}
+\item{model}{an object inheriting from \code{'fasttext'}.}
 
 \item{newdata}{a character vector giving the new data.}
 
-\item{newdata_file}{a character string giving the location of to the new data.}
-
-\item{result_file}{a character string naming a file.}
-
 \item{k}{an integer giving the number of labels to be returned.}
 
-\item{prob}{a logical if true the probabilities are also returned.}
+\item{threshold}{a double withing \code{[0, 1]} giving lower bound
+on the probabilities. Predictions with probabilities
+below this lower bound are not returned. The default
+is \code{0} which means all predictions are returned.}
+
+\item{rval}{a character string controlling the return value, allowed 
+values are \code{"sparse"}, \code{"dense"} and \code{"slam"}.
+The default is sparse, here the values are returned as a \code{data.frame}
+in a format similar to a simple triplet matrix (sometimes refereed to as the
+coordinate format). If \code{rval} is set to \code{"dense"}, a matrix
+of the probabilities is returned. Similarly if \code{rval} is set to 
+\code{"slam"}, a matrix in the simple triplet sparse format from the 
+\pkg{slam} package is returned.}
 
 \item{...}{currently not used.}
 }
@@ -33,7 +48,6 @@ Predict values based on a previously trained model.
 }
 \examples{
 \dontrun{
-predict(object, newdata)
+ft_predict(model, newdata)
 }
 }
-

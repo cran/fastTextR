@@ -2,28 +2,15 @@
 % Please edit documentation in R/fasttext.R
 \name{fasttext}
 \alias{fasttext}
-\title{Train a Model}
+\title{Create a New \code{FastText} Model}
 \usage{
-fasttext(input, method = c("supervised", "cbow", "skipgram"),
-  control = ft.control())
-}
-\arguments{
-\item{input}{a character string giving the location of the input file.}
-
-\item{method}{a character string giving the method, possible values are 
-\code{'supervised'}, \code{'cbow'} and \code{'skipgram'}.}
-
-\item{control}{a list giving the control variables, for more information
-see \code{\link{ft.control}}.}
+fasttext()
 }
 \description{
-Train a new word representation model or supervised 
-             classification model.
+Create a new \code{FastText} model. The available methods
+ are the same as the package functions but with out the prefix \code{"ft_"}
+ and without the need to provide the model.
 }
 \examples{
-\dontrun{
-model <- fasttext("my_data.txt", method="supervised", 
-                  control = ft.control(nthreads = 1L))
+ft <- fasttext()
 }
-}
-

@@ -1,20 +1,28 @@
 Package: fastTextR
 Type: Package
 Title: An Interface to the 'fastText' Library
-Version: 1.0
-Date: 2016-09-22
-Author: Florian Schwendinger [aut, cre]
-Maintainer: Florian Schwendinger <FlorianSchwendinger@gmx.at>
+Version: 2.0.0
+Authors@R: 
+    c(person("Florian", "Schwendinger", role = "aut"),
+      person(given = "Emil",
+             family = "Hvitfeldt",
+             role = c("aut", "cre"),
+             email = "emilhhvitfeldt@gmail.com",
+             comment = c(ORCID = "0000-0002-0679-1945")))
 Description: An interface to the 'fastText' library
 	<https://github.com/facebookresearch/fastText>. The package
 	can be used for text classification and to learn word vectors.
-	The install folder contains the 'PATENTS' file.
 	An example how to use 'fastTextR' can be found in the 'README' file.
 License: BSD_3_clause + file LICENSE
-Imports: stats, graphics, Rcpp (>= 0.12.4)
+Imports: stats, graphics, Rcpp (>= 0.12.4), slam
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
 LinkingTo: Rcpp
-RoxygenNote: 5.0.1
+RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2017-05-11 18:18:27 UTC; florian
+Packaged: 2020-09-10 06:35:05 UTC; emilhvitfeldthansen
+Author: Florian Schwendinger [aut],
+  Emil Hvitfeldt [aut, cre] (<https://orcid.org/0000-0002-0679-1945>)
+Maintainer: Emil Hvitfeldt <emilhhvitfeldt@gmail.com>
 Repository: CRAN
-Date/Publication: 2017-05-12 06:11:25 UTC
+Date/Publication: 2020-09-10 07:10:02 UTC

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------
-#  ft.control
+#  ft_control
 #  ==========
 #' @title Default Control Settings
 #' @description A auxiliary function for defining the control variables.
@@ -28,143 +28,201 @@
 #' @param pretrained_vectors a character string giving the file path
 #'                           to the pretrained word vectors which are used 
 #'                           for the supervised learning.
+#' @param output a character string giving the output file path.
+#' @param save_output a logical (default is \code{FALSE})
+#' @param seed an integer 
+#' @param qnorm  a logical (default is \code{FALSE})
+#' @param retrain a logical (default is \code{FALSE})
+#' @param qout a logical (default is \code{FALSE})
+#' @param cutoff an integer (default is \code{0L})
+#' @param dsub an integer (default is \code{2L})
+#' @param autotune_validation_file a character string
+#' @param autotune_metric a character string (default is \code{"f1"})
+#' @param autotune_predictions an integer (default is \code{1L})
+#' @param autotune_duration an integer (default is \code{300L})
+#' @param autotune_model_size a character string
 #' @return a list with the control variables.
 #' @examples
-#' ft.control(learning_rate=0.1)
-ft.control <- function(loss = c("softmax", "hs", "ns"), 
-                       learning_rate=0.05, learn_update=100L, word_vec_size=5L, 
+#' ft_control(learning_rate=0.1)
+ft_control <- function(loss = c("softmax", "hs", "ns"), 
+                       learning_rate=0.05, learn_update=100L, word_vec_size=100L, 
                        window_size=5L, epoch=5L, min_count=5L, min_count_label=0L,
                        neg=5L, max_len_ngram=1L, nbuckets=2000000L, min_ngram=3L,
                        max_ngram=6L, nthreads=1L, threshold=1e-4, label="__label__", 
-                       verbose=0, pretrained_vectors="") {
+                       verbose=0, pretrained_vectors="", output="", save_output=FALSE, 
+                       seed=0L, qnorm=FALSE, retrain=FALSE, qout=FALSE, cutoff=0L, 
+                       dsub=2L, autotune_validation_file="", autotune_metric="f1", 
+                       autotune_predictions=1L, autotune_duration=300L, 
+                       autotune_model_size="") {
     loss <- match.arg(loss)
-    as.list(environment())
+    cntrl <- as.list(environment())
+    class(cntrl) <- c("ft_control", class(cntrl))
+    cntrl
 }
 
-.control_arguments <- c("input", "test", "output", "learning_rate", "learn_update", 
-                        "word_vec_size", "window_size", "epoch", "min_count", 
-                        "min_count_label", "neg", "max_len_ngram", "nbuckets", 
-                        "min_ngram", "max_ngram", "nthreads", "threshold", "label", 
-                        "verbose", "pretrained_vectors")
+
+check_control_arguments <- function(control) {
+    control_arguments <- c("input", "output", "learning_rate", "learn_update", 
+        "word_vec_size", "window_size", "epoch", "min_count",  "min_count_label", 
+        "neg", "max_len_ngram", "nbuckets", "min_ngram", "max_ngram", "nthreads", 
+        "threshold", "label", "verbose", "pretrained_vectors", "save_output", "seed",
+        "qnorm", "retrain", "qout", "cutoff", "dsub", "autotune_validation_file", 
+        "autotune_metric", "autotune_predictions", "autotune_duration", 
+        "autotune_model_size")
+    if ( !all(control_arguments %in% names(control)) ) {
+        i <- which(!control_arguments %in% names(control))
+        if ( length(i) == 1) {
+            stop("control argument '", control_arguments[i], "' is missing")
+        } else {
+            stop("control arguments ", 
+                 paste(shQuote(control_arguments[i]), collapse=", "), 
+                 " are missing")
+        }
+    }
+}
+
 
 # -----------------------------------------------------------
 #  fasttext
 #  ========
+#' @title Create a New \code{FastText} Model
+#' @description Create a new \code{FastText} model. The available methods
+#'  are the same as the package functions but with out the prefix \code{"ft_"}
+#'  and without the need to provide the model.
+#' @examples
+#' ft <- fasttext()
+fasttext <- function() {
+    model <- new.env(parent = emptyenv())
+
+    model$pointer <- NULL
+    model$model_type <- "new_model"
+    model$nwords <- 0L
+    model$ntoken <- 0L
+    model$nlabels <- 0L
+
+    update_model <- function(self, new_model) {
+        self$pointer <- new_model$pointer
+        self$model_type <- new_model$model_type
+        self$nwords <- new_model$nwords
+        self$ntoken <- new_model$ntoken
+        self$nlabels <- new_model$nlabels
+        class(self) <- class(new_model)
+        return(invisible(NULL))
+    }
+
+    model$load <- function(file) {
+        self <- parent.env(environment())$model
+        update_model(self, ft_load(file))
+        return(invisible(NULL))
+    }
+
+    model$save <- function(file, what = c("model", "vectors", "output")) {
+        ft_save(parent.env(environment())$model, file, what = what)
+    }
+    
+    model$train <- function(file, method = c("supervised", "cbow", "skipgram"), 
+                            control = ft_control(), ...) {
+        self <- parent.env(environment())$model
+        update_model(self, ft_train(file, method, control, ...))
+        return(invisible(NULL))
+    }
+
+    model$predict <- function(newdata, k = 1L, threshold = 0, 
+                              rval = c("sparse", "dense", "slam"), ...) {
+        self <- parent.env(environment())$model
+        ft_predict(self, newdata, k, threshold, rval, ...)
+    }
+
+    model$test <- function(file, k=1L, threshold=0.0) {
+        ft_test(parent.env(environment())$model, file, k, threshold)
+    }
+
+    model$words <- function() {
+        ft_words(parent.env(environment())$model)
+    }
+
+    model$word_vectors <- function(words) {
+        ft_word_vectors(parent.env(environment())$model, words)
+    }
+
+    model$nearest_neighbors <- function(word, k = 10L) {
+        ft_nearest_neighbors(parent.env(environment())$model, word, k)
+    }
+
+    model$analogies <- function(word_triplets, k = 10L) {
+        ft_analogies(parent.env(environment())$model, word_triplets, k)
+    }
+
+    class(model) <- "fasttext"
+    
+    model
+}
+
+
+.wrap_model <- function(env) {
+    env$model_type <- Rft_model_type( env$pointer )
+    env$nwords <- Rft_dict_get_nwords( env$pointer )
+    env$ntoken <- Rft_dict_get_ntokens( env$pointer )
+    env$nlabels <- Rft_dict_get_nlabels( env$pointer )
+    class(env) <- c(sprintf("%s_model", env$model_type), "fasttext")
+    env
+}
+
+
+# -----------------------------------------------------------
+#  ft_train
+#  ========
 #' @title Train a Model
 #' @description Train a new word representation model or supervised 
 #'              classification model.
-#' @param input a character string giving the location of the input file.
-## @param output a character string giving the location of the output file.
+#' @param file a character string giving the location of the input file.
 #' @param method a character string giving the method, possible values are 
 #'               \code{'supervised'}, \code{'cbow'} and \code{'skipgram'}.
 #' @param control a list giving the control variables, for more information
-#'                see \code{\link{ft.control}}.
+#'                see \code{\link{ft_control}}.
+#' @param ... additional control arguments inserted into the control list.
 #' @examples
 #' \dontrun{
-#' model <- fasttext("my_data.txt", method="supervised", 
-#'                   control = ft.control(nthreads = 1L))
+#' cntrl <- ft_control(nthreads = 1L)
+#' model <- ft_train("my_data.txt", method="supervised", control = cntrl)
 #' }
-## fasttext <- function(input, output = "", 
-##                      method = c("supervised", "cbow", "skipgram"), 
-##                      control = ft.control()) {
-fasttext <- function(input, method = c("supervised", "cbow", "skipgram"), 
-                     control = ft.control()) {
-    output <- ""
+ft_train <- function(file, method = c("supervised", "cbow", "skipgram"), 
+                     control = ft_control(), ...) {
     method <- match.arg(method)
-    stopifnot( is.character(input), is.character(output) )
-    stopifnot( file.exists(input) )
+    stopifnot( is.character(file), file.exists(file), inherits(control, "ft_control") )
+    control <- modifyList(control, list(...))
 
-    save_to_file <- if ( !nchar(output) ) 0L else 1L
-
-    control$input <- input
+    control$input <- file
     control$method <- method
-    control$output <- output
-    control$test <- ""
-    if ( !all(.control_arguments %in% names(control)) ) {
-        i <- which(!.control_arguments %in% names(control))
-        if ( length(i) == 1) {
-            stop("control argument '", .control_arguments[i], "' is missing")
-        } else {
-            stop("control arguments ", 
-                 paste(shQuote(.control_arguments[i]), collapse=", "), 
-                 " are missing")
-        }
-    }
-    env <- new.env(parent<-emptyenv())
-    env$pointer <- Rft_train(control, save_to_file)
-    .wrap_model( env )
+
+    check_control_arguments(control)
+    
+    model <- fasttext()
+    model$pointer <- Rft_train(control)
+    .wrap_model(model)
 }
 
-evaluate <- function(model, known_labels, newdata, k) UseMethod("evaluate")
 
 # -----------------------------------------------------------
-#  evaluate
-#  ========
-## @title Evaluate the Model
-## @description Evaluate the quality of the predictions.
-##              For the model evaluation precision and recall are used.
-## @param model an object inheriting from \code{'fasttext'}.
-## @param known_labels a character vector giving the known labels.
-## @param newdata a character vector giving new data for the evaluation.
-## @param k an integer giving the number of labels to be returned.
-## @examples
-## \dontrun{
-## ft.test(model, test_file)
-## }
-evaluate.supervised_model <- function(model, known_labels, newdata, k=1L) {
-    stopifnot( inherits(model, "fasttext") )
-    if ( k != 1L ) 
-        stop("k != 1 is not implemented yet")
-    pred <- predict(model, known_labels, newdata, k = k)
-    confusion_matrix <- table(known_labels = known_labels, predicted = pred[,1])
-    list(confusion_matrix = confusion_matrix, 
-         precision = precision(confusion_matrix),
-         recall = recall(confusion_matrix),
-         accuracy_score = accuracy_score(confusion_matrix))
-}
-
-.evaluate_supervised_model <- function(model, known_labels, newdata_file, k=1L) {
-    stopifnot(is.character(newdata_file), file.exists(newdata_file))
-    stopifnot( inherits(model, "fasttext") )
-    pred <- predict(model, newdata_file, k = k)
-    confusion_matrix <- table(known_labels = known_labels, predicted = pred[,1])
-    list(confusion_matrix = confusion_matrix, 
-         precision = precision(confusion_matrix),
-         recall = recall(confusion_matrix),
-         accuracy_score = accuracy_score(confusion_matrix))
-}
-
-precision <- function(confusion_matrix) {
-    diag(confusion_matrix) / colSums(confusion_matrix)
-}
-
-recall <- function(confusion_matrix) {
-    diag(confusion_matrix) / rowSums(confusion_matrix)
-}
-
-accuracy_score <- function(confusion_matrix) {
-    sum(diag(confusion_matrix)) / sum(confusion_matrix)
-}
-
-ft.test <- function(model, test_file, k=1L) {
-    stopifnot(is.character(test_file), file.exists(test_file))
-    stopifnot( inherits(model, "fasttext") )
-    x <- Rft_test(model$pointer, test_file, as.integer(k))
-    names(x) <- c("precision", "recall", "nexamples", "number_of_correctly_predicted")
-    return( x[1:3] )
-}
-
-# -----------------------------------------------------------
-#  predict
-#  =======
+#  ft_predict
+#  ==========
 #' @title Predict using a Previously Trained Model
 #' @description Predict values based on a previously trained model.
-#' @param object an object inheriting from \code{'fasttext'}.
+#' @param model an object inheriting from \code{'fasttext'}.
 #' @param newdata a character vector giving the new data.
-#' @param newdata_file a character string giving the location of to the new data.
-#' @param result_file a character string naming a file.
 #' @param k an integer giving the number of labels to be returned.
-#' @param prob a logical if true the probabilities are also returned.
+#' @param threshold a double withing \code{[0, 1]} giving lower bound
+#'                  on the probabilities. Predictions with probabilities
+#'                  below this lower bound are not returned. The default
+#'                  is \code{0} which means all predictions are returned.
+#' @param rval a character string controlling the return value, allowed 
+#'      values are \code{"sparse"}, \code{"dense"} and \code{"slam"}.
+#'      The default is sparse, here the values are returned as a \code{data.frame}
+#'      in a format similar to a simple triplet matrix (sometimes refereed to as the
+#'      coordinate format). If \code{rval} is set to \code{"dense"}, a matrix
+#'      of the probabilities is returned. Similarly if \code{rval} is set to 
+#'      \code{"slam"}, a matrix in the simple triplet sparse format from the 
+#'      \pkg{slam} package is returned.
 #' @param ... currently not used. 
 #' @return \code{NULL} if a \code{'result_file'} is given otherwise 
 #'         if \code{'prob'} is true a \code{data.frame} with the predicted labels 
@@ -172,101 +230,116 @@ ft.test <- function(model, test_file, k=1L) {
 #'         character vector with the predicted labels.
 #' @examples
 #' \dontrun{
-#' predict(object, newdata)
+#' ft_predict(model, newdata)
 #' }
 #' @name predict.supervised_model
 #' @rdname predict.supervised_model
-predict.supervised_model <- function(object, newdata = character(), newdata_file = "", 
-                                     result_file = "", k = 1L, prob = FALSE, ...) {
-    stopifnot( inherits(object, "fasttext") )
-    if ( missing(newdata) ) {
-        stopifnot(is.character(newdata_file), is.character(result_file), 
-                  file.exists(newdata))
-        if ( missing(result_file) ) {
-            pred <- Rft_predict(object$pointer, newdata_file, as.integer(k), 
-                                as.logical(prob))
-        } else {
-            pred <- Rft_predict_to_file(object$pointer, newdata_file, result_file, 
-                                        as.integer(k), as.logical(prob))
-            return( NULL )
-        }
-    } else {
-        pred <- Rft_vec_predict(object$pointer, newdata, as.integer(k), as.logical(prob))
-    }
-    if ( !prob ) {
-        if ( k > 1 ) {
-            pred <- matrix(pred[[1]], ncol=k, byrow=TRUE)
-            colnames(pred) <- sprintf("best_%s", seq_len(k))
-            return( pred )
-        }
-        return( pred[[1]] )
-    }
-    if ( k > 1 ) {
-        pred[[1]] <- matrix(pred[[1]], ncol=k, byrow=TRUE)
-        pred[[2]] <- matrix(pred[[2]], ncol=k, byrow=TRUE)
-        cn <- sprintf("best_%s", seq_len(k))
-        colnames(pred[[1]]) <- cn
-        colnames(pred[[2]]) <- cn
-    }
-    return( pred )
+ft_predict <- function(model, newdata, k = 1L, threshold = 0, 
+                       rval = c("sparse", "dense", "slam"), ...) {
+    stopifnot( inherits(model, "fasttext"), inherits(newdata, "character") )
+
+    rval <- match.arg(rval)
+    pred <- Rft_predict_vec(model$pointer, newdata, as.integer(k), threshold = threshold)
+
+    if (rval == "sparse") return(data.frame(pred, stringsAsFactors = FALSE))
+
+    labels <- unique(pred$label)
+    labels <- labels[order(as.integer(gsub("\\D", "", labels)))]
+    j <- match(pred$label, labels)
+    probs <- simple_triplet_matrix(i = pred$id, j = j, v = pred$prob) 
+    colnames(probs) <- labels
+    if (rval == "dense") as.matrix(probs) else probs
 }
 
+
 # -----------------------------------------------------------
-#  save.fasttext
-#  =============
-#' @title Save Model
-#' @description Save the model to a file.
-#' @param model an object inheriting from \code{"fasttext"}.
-#' @param file a character string giving the name of the file.
+#  ft_test
+#  =======
+#' @title Evaluate the Model
+#' @description Evaluate the quality of the predictions.
+#'              For the model evaluation precision and recall are used.
+#' @param model an object inheriting from \code{'fasttext'}.
+#' @param file a character string giving the location of the validation file.
+#' @param k an integer giving the number of labels to be returned.
+#' @param threshold a double giving the threshold.
 #' @examples
 #' \dontrun{
-#' save.fasttext(model = m, file = "data.model")
+#' ft_test(model, file)
 #' }
-save.fasttext <- function(model, file) {
-    stopifnot( is.character(file), inherits(model, "fasttext") )
-    Rft_save_model(model$pointer, file)
-    return(invisible(NULL))
+ft_test <- function(model, file, k=1L, threshold=0.0) {
+    stopifnot(is.character(file), file.exists(file))
+    stopifnot( inherits(model, "fasttext") )
+    x <- Rft_test(model$pointer, file, as.integer(k), threshold)
+    x
 }
 
+
 # -----------------------------------------------------------
-#  read.fasttext
+#  ft_load_model
 #  =============
-#' @title Read Model
-#' @description Read a previously saved model from file.
+#' @title Load Model
+#' @description Load a previously saved model from file.
 #' @param file a character string giving the name of the file
 #'             to be read in.
 #' @return an object inheriting from \code{"fasttext"}.
 #' @examples
 #' \dontrun{
-#' model <- read.fasttext( "dbpedia.bin" )
+#' model <- ft_load("dbpedia.bin")
 #' }
-read.fasttext <- function(file) {
+ft_load <- function(file) {
     if ( !file.exists(file) ) {
         stop("cannot open file '", file, "': No such file or directory")
     }
-    env <- new.env(parent = emptyenv())
-    env$pointer <- try(Rft_load_model(file), silent = TRUE)
-    if ( inherits(env$pointer, "try-error") ) {
+    model <- fasttext()
+    model$pointer <- try(Rft_load_model(file), silent = TRUE)
+    if ( inherits(model, "try-error") ) {
         stop("version doesn't fit. The model was created by a different version than 'fastTextR' uses.")
     }
-    .wrap_model( env )
+    .wrap_model(model)
 }
 
+
 # -----------------------------------------------------------
-#  get_words
-#  =========
+#  ft_save
+#  =======
+#' @title Write Model
+#' @description Write a previously saved model from file.
+#' @param model an object inheriting from \code{'fasttext'}.
+#' @param file a character string giving the name of the file.
+#' @param what a character string giving what should be saved.
+#' @examples
+#' \dontrun{
+#' ft_save(model, "my_model.bin", what = "model")
+#' }
+ft_save <- function(model, file, what = c("model", "vectors", "output")) {
+    what <- match.arg(what)
+    if (what == "model") {
+        Rft_save_model(model$pointer, file)
+    } else if (what == "vectors") {
+        Rft_save_vectors(model$pointer, file)
+    } else {
+        Rft_save_output(model$pointer, file)
+    }
+    invisible(NULL)
+}
+
+
+# -----------------------------------------------------------
+#  ft_words
+#  ========
 #' @title Get Words
 #' @description Obtain all the words from a previously trained model.
 #' @param model an object inheriting from \code{"fasttext"}.
 #' @return a character vector.
 #' @examples
 #' \dontrun{
-#' get_words(model)
+#' ft_words(model)
 #' }
-get_words <- function(model) {
+ft_words <- function(model) {
     stopifnot( inherits(model, "fasttext") )
-    Rft_dict_get_all_words(Rft_ft_get_dict(model$pointer))
+    Rft_all_words(model$pointer)
 }
+
 
 # -----------------------------------------------------------
 #  get_word_vectors
@@ -278,32 +351,71 @@ get_words <- function(model) {
 #' @return a matrix containing the word vectors.
 #' @examples
 #' \dontrun{
-#' get_word_vectors(model, c("word", "vector"))
+#' ft_word_vectors(model, c("word", "vector"))
 #' }
-get_word_vectors <- function(model, words) {
+ft_word_vectors <- function(model, words) {
     stopifnot(is.character(words), all(nchar(words) > 0))
     stopifnot( inherits(model, "fasttext") )
-    word_vec <- Rft_get_word_vectors(model$pointer, words)
-    word_vec <- matrix(word_vec, nrow=length(words), byrow=TRUE)
+    word_vec <- Rft_word_vectors(model$pointer, words)
+    word_vec <- do.call(rbind, word_vec)
     rownames(word_vec) <- words
     word_vec
 }
 
-# -----------------------------------------------------------
-#  ft.word_vector
-#  ==============
-## get_word_vectors <- function(model, words=NULL) {
-##     Rft_get_all_word_vectors(model$pointer)
-## }
 
-.wrap_model <- function(env) {
-    env$model_type <- Rft_ft_get_model_type( env$pointer )
-    env$dict <- Rft_ft_get_dict( env$pointer )
-    env$nwords <- Rft_dict_get_nwords( env$dict )
-    env$ntoken <- Rft_dict_get_ntokens( env$dict )
-    env$nlabels <- Rft_dict_get_nlabels( env$dict )
-    class(env) <- c(sprintf("%s_model", env$model_type), "fasttext")
-    env
+# -----------------------------------------------------------
+#  ft_nearest_neighbors
+#  =================
+#' @title Get Nearest Neighbors
+#' @description TODO
+#' @param model an object inheriting from \code{"fasttext"}.
+#' @param word a character string giving the word.
+#' @param k an integer giving the number of nearest neighbors to be returned.
+#' @return .
+#' @examples
+#' \dontrun{
+#' ft_nearest_neighbors(model, "enviroment", k = 6L)
+#' }
+ft_nearest_neighbors <- function(model, word, k = 10L) {
+    stopifnot(is.character(word), isTRUE(length(word) == 1L))
+    stopifnot( inherits(model, "fasttext") )
+    Rft_nearest_neighbors(model$pointer, word, as.integer(k))
+}
+
+# -----------------------------------------------------------
+#  ft_analogies
+#  ============
+#' @title Get Analogies
+#' @description TODO
+#' @param model an object inheriting from \code{"fasttext"}.
+#' @param word_triplets a character vector of length \code{}string giving the word.
+#' @param k an integer giving the number of nearest neighbors to be returned.
+#' @return .
+#' @examples
+#' \dontrun{
+#' ft_analogies(model, c("berlin", "germany", "france"), k = 6L)
+#' }
+ft_analogies <- function(model, word_triplets, k = 10L) {
+    stopifnot(is.character(word_triplets), isTRUE(length(word_triplets) == 3L))
+    stopifnot( inherits(model, "fasttext") )
+    Rft_analogies(model$pointer, word_triplets[1L], word_triplets[2L], 
+                  word_triplets[3L], as.integer(k))
+}
+
+
+print_fasttext_methods <- function(x) {
+    hide <- c("nlabels",  "ntoken", "nwords", "pointer", "update")
+    ft_methods <- setdiff(ls(x), hide)
+    for (method in ft_methods) {
+        args <- gsub("function ", "", trimws(capture.output(str(get(method, envir = x)))))
+        cat("  $", method, args, "\n", sep="")
+    }
+}
+
+
+print.fasttext <- function(x, ...) {
+    cat("Empty fastText model:\n")
+    print_fasttext_methods(x)
 }
 
 print.cbow_model <- function(x, ...) {
@@ -329,16 +441,16 @@ print.supervised_model <- function(x, ...) {
 }
 
 # -----------------------------------------------------------
-#  normalize
-#  =========
+#  ft_normalize
+#  ============
 #' @title Normalize
 #' @description Applies normalization to a given text.
 #' @param txt a character vector to be normalized.
 #' @return a character vector.
 #' @examples
 #' \dontrun{
-#' normalize(some_text)
+#' ft_normalize(some_text)
 #' }
-normalize <- function(txt) {
+ft_normalize <- function(txt) {
     clean_text(txt)
 }
