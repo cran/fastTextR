@@ -3,7 +3,7 @@
 #  fn <- "dbpedia_csv.tar.gz"
 #  
 #  if ( !file.exists(fn) ) {
-#      download.file("https://github.com/le-scientifique/torchDatasets/raw/master/dbpedia_csv.tar.gz",
+#      download.file("https://github.com/srhrshr/torchDatasets/raw/master/dbpedia_csv.tar.gz",
 #                    fn)
 #      untar(fn)
 #  }
