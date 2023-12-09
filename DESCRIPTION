@@ -1,7 +1,7 @@
 Package: fastTextR
 Type: Package
 Title: An Interface to the 'fastText' Library
-Version: 2.0.1
+Version: 2.1.0
 Authors@R: 
     c(person("Florian", "Schwendinger", role = "aut"),
       person(given = "Emil",
@@ -18,13 +18,14 @@ Imports: stats, graphics, Rcpp (>= 0.12.4), slam
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 LinkingTo: Rcpp
-RoxygenNote: 7.1.1
+Encoding: UTF-8
+RoxygenNote: 7.2.3
 URL: https://github.com/EmilHvitfeldt/fastTextR
 BugReports: https://github.com/EmilHvitfeldt/fastTextR/issues
 NeedsCompilation: yes
-Packaged: 2022-10-31 00:12:04 UTC; emilhvitfeldthansen
+Packaged: 2023-12-08 23:17:48 UTC; emilhvitfeldt
 Author: Florian Schwendinger [aut],
   Emil Hvitfeldt [aut, cre] (<https://orcid.org/0000-0002-0679-1945>)
 Maintainer: Emil Hvitfeldt <emilhhvitfeldt@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-10-31 08:10:11 UTC
+Date/Publication: 2023-12-09 00:40:09 UTC

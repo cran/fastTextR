@@ -380,6 +380,11 @@ pre-trained models are a good option.</p>
 ## pidgey    0.0452978685  0.0090015158  0.067562237 0.11123407 -0.008441916
 ## yellow    0.0007776691 -0.0001886144  0.001824494 0.03869999  0.036413591</code></pre>
 </div>
+<div id="printing-sentence-vectors" class="section level2">
+<h2>Printing sentence vectors</h2>
+<pre class="r"><code>ft_sentence_vectors(model, c(&quot;Poets have been mysteriously silent on the subject of cheese&quot;, &quot;Who did not let the gorilla into the ballet&quot;))[,1:5]</code></pre>
+<pre><code>???</code></pre>
+</div>
 <div id="nearest-neighbor-queries" class="section level2">
 <h2>Nearest neighbor queries</h2>
 <pre class="r"><code>ft_nearest_neighbors(model, &#39;asparagus&#39;, k = 5L)</code></pre>
