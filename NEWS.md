@@ -1,3 +1,7 @@
+# fastTextR 2.1.1
+
+* Fixed C++20 deprecation warnings for implicit `this` capture in lambda expressions.                                   
+
 # fastTextR 2.1.0
 
 # fastTextR 2.0.1
